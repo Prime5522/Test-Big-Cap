@@ -2,7 +2,7 @@
 import re
 
 _BTN_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
-STYLES = ("primary", "success", "danger")
+STYLES = ("primary", "success", "danger", "warning", "yellow", "purple", "orange", "cyan", "black", "white")
 _URL_OK = re.compile(r"^(https?://|tg://|t\.me/)", re.I)
 MAX_ROWS, MAX_PER_ROW = 8, 4
 
