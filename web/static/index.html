@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d0a18">
+<title>Caption Studio</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --ink:#0d0a18; --surface:#161226; --raise:#1d1833; --line:#2b2447; --text:#f0ecfb; --mute:#9b93b8;
+  --violet:#9b5de5; --violet-2:#b783f2; --amber:#f2b84b; --mint:#4ade80; --red:#f26d6d;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI Variable","Segoe UI",Roboto,"Noto Sans Bengali","Noto Sans",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ink);color:var(--text);font:15px/1.5 var(--sans)}
+body{padding-top:env(safe-area-inset-top,0);padding-bottom:calc(76px + env(safe-area-inset-bottom,0))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--violet-2);outline-offset:2px}
+[hidden]{display:none!important}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 10px;position:sticky;top:env(safe-area-inset-top,0);z-index:5;background:linear-gradient(var(--ink) 80%,transparent)}
+.top h1{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em}
+.top small{display:block;color:var(--mute);font-size:12px;margin-top:1px}
+.pick{position:relative;max-width:55%}
+.pick select{appearance:none;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 32px 8px 14px;text-overflow:ellipsis}
+.pick::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+
+main{padding:0 16px}
+section.tab{display:none;padding-top:6px}
+body[data-tab="caption"] [data-tab="caption"],body[data-tab="style"] [data-tab="style"],body[data-tab="words"] [data-tab="words"],
+body[data-tab="auto"] [data-tab="auto"],body[data-tab="tools"] [data-tab="tools"]{display:block}
+body[data-tab="auto"] #pv,body[data-tab="tools"] #pv{display:none}
+
+/* the one bold element: the live post */
+#pv{margin:4px 0 18px;padding:16px 14px 14px;border-radius:22px;border:1px solid var(--line);
+  background:radial-gradient(120% 90% at 85% 0%,rgba(155,93,229,.30),transparent 60%),
+             radial-gradient(90% 70% at 0% 100%,rgba(183,131,242,.12),transparent 60%),var(--surface)}
+#pv .lbl{font-size:12px;color:var(--mute);margin:0 4px 10px;display:flex;justify-content:space-between}
+.msg{max-width:94%;background:#241d3d;border-radius:16px 16px 16px 5px;padding:8px;box-shadow:0 10px 30px -12px rgba(0,0,0,.7)}
+.file{display:flex;gap:10px;align-items:center;padding:6px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px}
+.file i{flex:none;width:38px;height:38px;border-radius:50%;background:var(--violet);display:grid;place-items:center;font-style:normal;font-size:14px}
+.file b{display:block;font-size:13px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+.file small{color:var(--mute);font-size:12px}
+.cap{white-space:pre-wrap;word-break:break-word;padding:0 4px 2px;font-size:14.5px;line-height:1.45}
+.cap a{color:#8ab4ff}.cap code,.cap pre{font-family:var(--mono);background:rgba(255,255,255,.08);border-radius:4px;padding:0 4px;font-size:13px}
+.cap pre{display:block;padding:6px 8px}.cap blockquote{margin:4px 0;padding:2px 10px;border-left:3px solid var(--violet-2);background:rgba(155,93,229,.12);border-radius:0 6px 6px 0}
+.spoiler{background:#6b6485;color:transparent;border-radius:4px;cursor:pointer}.spoiler:active{color:inherit}
+.kb{display:grid;gap:4px;margin-top:8px}.kb div{display:flex;gap:4px}
+.kb span{flex:1;text-align:center;padding:8px 6px;border-radius:8px;background:rgba(255,255,255,.1);font-size:13.5px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb .primary{background:#2d68c8}.kb .success{background:#2a9456}.kb .danger{background:#bf3f3f}
+
+h2{font-size:15px;font-weight:650;margin:22px 0 4px}
+p.hint{color:var(--mute);font-size:13px;margin:0 0 10px}
+.group{border-top:1px solid var(--line);padding-top:4px}
+textarea,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;resize:vertical}
+textarea{font-family:var(--mono);font-size:13.5px;line-height:1.5;min-height:92px}
+textarea:focus,input[type=text]:focus,select:focus{border-color:var(--violet);outline:none;box-shadow:0 0 0 3px rgba(155,93,229,.22)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer}
+.chip.v{font-family:var(--mono);font-size:12.5px;color:var(--violet-2)}.chip:active{background:var(--raise)}
+
+button.btn{border:0;border-radius:12px;padding:11px 16px;background:var(--violet);color:#fff;font-weight:600;cursor:pointer}
+button.btn:active{filter:brightness(.9)}button.btn:disabled{opacity:.5}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+button.danger{background:transparent;border:1px solid rgba(242,109,109,.5);color:var(--red)}
+.inline{display:flex;gap:8px}.inline input{flex:1}
+
+.row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.row span{font-weight:550}.row small{display:block;color:var(--mute);font-weight:400;font-size:13px}
+.sw{appearance:none;flex:none;width:46px;height:28px;border-radius:99px;background:var(--line);position:relative;transition:background .18s;cursor:pointer}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .18s}
+.sw:checked{background:var(--violet)}.sw:checked::after{transform:translateX(18px)}
+
+ul.list{list-style:none;margin:8px 0;padding:0}
+ul.list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13.5px}
+ul.list li button{background:none;border:0;color:var(--mute);font-size:16px;padding:2px 8px;cursor:pointer}
+.arrow{color:var(--mute);margin:0 6px}
+.empty{padding:36px 8px;text-align:center;color:var(--mute)}.empty h2{color:var(--text);margin-top:0}
+.empty a{display:inline-block;margin-top:14px;text-decoration:none}
+.stat{display:flex;gap:18px;margin:6px 0}.stat div{flex:1}.stat b{display:block;font-size:22px;font-weight:650}.stat small{color:var(--mute)}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0));background:rgba(13,10,24,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);z-index:6}
+nav.tabs button{flex:1;background:none;border:0;color:var(--mute);padding:10px 2px;font-size:13px;font-weight:550;border-radius:10px;cursor:pointer}
+nav.tabs button[aria-selected=true]{color:var(--text);background:var(--raise);box-shadow:inset 0 -2px 0 var(--violet)}
+
+.save{position:fixed;left:12px;right:12px;bottom:calc(68px + env(safe-area-inset-bottom,0));z-index:7;display:flex;align-items:center;gap:8px;padding:10px 10px 10px 16px;border-radius:16px;background:var(--raise);border:1px solid var(--amber);box-shadow:0 14px 40px -10px rgba(0,0,0,.8)}
+.save span{flex:1;color:var(--amber);font-weight:600;font-size:14px}.save .btn{padding:9px 14px}
+#toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0));transform:translate(-50%,-90px);z-index:9;background:var(--raise);border:1px solid var(--line);padding:10px 16px;border-radius:99px;font-weight:550;transition:transform .25s;max-width:90vw}
+#toast.on{transform:translate(-50%,0)}#toast.err{border-color:var(--red);color:var(--red)}#toast.ok{border-color:var(--mint)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (min-width:640px){main,.top{max-width:560px;margin:0 auto}}
+</style>
+</head>
+<body data-tab="caption">
+<header class="top">
+  <div><h1>Caption Studio</h1><small id="hello">Loading…</small></div>
+  <label class="pick" id="pickWrap" hidden><select id="chan" aria-label="Channel"></select></label>
+</header>
+
+<div class="empty" id="empty" hidden></div>
+
+<main id="main" hidden>
+  <section id="pv" aria-live="polite">
+    <div class="lbl"><span>Live preview</span><span id="pvState"></span></div>
+    <div class="msg">
+      <div class="file"><i>▶</i><div><b id="pvFile"></b><small id="pvMeta">2.30 GB</small></div></div>
+      <div class="cap" id="pvCap"></div>
+      <div class="kb" id="pvKb"></div>
+    </div>
+  </section>
+
+  <section class="tab" data-tab="caption">
+    <h2 style="margin-top:4px">Caption template</h2>
+    <p class="hint">Tap a style to start, then edit. Leave empty to use the default caption.</p>
+    <div class="chips" id="presets"></div>
+    <textarea id="cap" rows="7" spellcheck="false" placeholder="&lt;b&gt;{title}&lt;/b&gt; ({year})&#10;🔊 {audio}  📺 {quality}"></textarea>
+    <p class="hint" style="margin-top:12px">Tap a variable to insert it. Lines with no data are removed automatically.</p>
+    <div class="chips" id="vars"></div>
+    <div class="group"><h2>Test with a file name</h2>
+      <p class="hint">Only changes the preview. Nothing is saved.</p>
+      <input type="text" id="fname" autocapitalize="off" spellcheck="false"></div>
+  </section>
+
+  <section class="tab" data-tab="style">
+    <h2 style="margin-top:4px">Prefix</h2><p class="hint">Added above every caption.</p>
+    <textarea id="prefix" rows="2" spellcheck="false"></textarea>
+    <h2>Suffix</h2><p class="hint">Added below every caption — signature, source, channel link.</p>
+    <textarea id="suffix" rows="2" spellcheck="false"></textarea>
+    <div class="group"><h2>Buttons</h2>
+      <p class="hint">One line is one row. Add <b>:primary</b>, <b>:success</b> or <b>:danger</b> after the link for colour.</p>
+      <textarea id="buttons" rows="4" spellcheck="false" placeholder="[Join](https://t.me/example:primary) [Site](https://example.com)"></textarea>
+      <div class="chips"><button class="chip" data-addbtn>+ Add a button</button></div></div>
+    <div class="group"><h2>Hashtags</h2><p class="hint">Turn these details into hashtags.</p>
+      <label class="row"><span>Audio<small>#Hindi #English</small></span><input type="checkbox" class="sw" data-tag="audio"></label>
+      <label class="row"><span>Quality<small>#1080p #WEBDL</small></span><input type="checkbox" class="sw" data-tag="quality"></label>
+      <label class="row"><span>Year<small>#2019</small></span><input type="checkbox" class="sw" data-tag="year"></label></div>
+  </section>
+
+  <section class="tab" data-tab="words">
+    <h2 style="margin-top:4px">Remove words</h2><p class="hint">These words are deleted from file names and captions. Not case-sensitive.</p>
+    <div class="inline"><input type="text" id="rmIn" placeholder="Word or phrase" autocapitalize="off"><button class="btn" id="rmAdd">Add</button></div>
+    <ul class="list" id="rmList"></ul>
+    <div class="group"><h2>Replace words</h2><p class="hint">Swap one word for another. Longer matches win.</p>
+      <div class="inline"><input type="text" id="rpOld" placeholder="Find" autocapitalize="off"><input type="text" id="rpNew" placeholder="Replace with" autocapitalize="off"><button class="btn" id="rpAdd">Add</button></div>
+      <ul class="list" id="rpList"></ul></div>
+  </section>
+
+  <section class="tab" data-tab="auto">
+    <label class="row"><span>Bot active<small>Turn off to pause captions in this channel</small></span><input type="checkbox" class="sw" id="enabled"></label>
+    <label class="row"><span>Auto clean<small>Removes links, @mentions, emojis and stray symbols</small></span><input type="checkbox" class="sw" id="autoclean"></label>
+    <label class="row"><span>Auto reactions<small>Adds a random emoji reaction to every post</small></span><input type="checkbox" class="sw" id="react"></label>
+    <div class="row"><span>Sticker after posts<small id="stk"></small></span></div>
+  </section>
+
+  <section class="tab" data-tab="tools">
+    <div class="stat"><div><b id="files">0</b><small>files processed here</small></div></div>
+    <div class="group" id="adminBox" hidden><h2>Bot overview</h2><div class="stat"><div><b id="sU">0</b><small>users</small></div><div><b id="sC">0</b><small>channels</small></div><div><b id="sF">0</b><small>files</small></div></div></div>
+    <div class="group"><h2>Copy these settings</h2><p class="hint">Send this channel’s setup to another channel you manage. Your unsaved changes are not copied.</p>
+      <div class="inline"><label class="pick" style="flex:1;max-width:none"><select id="copyTo" aria-label="Target channel"></select></label><button class="btn" id="copyBtn">Copy</button></div></div>
+    <div class="group"><h2>Reset channel</h2><p class="hint">Removes caption, buttons, words, reactions and sticker. This can’t be undone.</p>
+      <button class="btn danger" id="resetBtn">Reset all settings</button></div>
+  </section>
+</main>
+
+<div class="save" id="save" hidden><span>Unsaved changes</span><button class="btn ghost" id="discard">Discard</button><button class="btn" id="saveBtn">Save changes</button></div>
+<nav class="tabs" id="tabs" hidden>
+  <button aria-selected="true" data-go="caption">Caption</button><button data-go="style">Style</button><button data-go="words">Words</button><button data-go="auto">Auto</button><button data-go="tools">Tools</button>
+</nav>
+<div id="toast" role="status"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+tg?.ready(); tg?.expand(); try{tg?.setHeaderColor("#0d0a18");tg?.setBackgroundColor("#0d0a18");tg?.disableVerticalSwipes?.()}catch(e){}
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SAMPLE="Avengers.Endgame.2019.1080p.BluRay.x265.Hindi.English.ESub.mkv";
+const VARS=["name","title","caption","year","size","duration","audio","quality","season","episode","subtitle","ext"];
+const PRESETS={
+ "Minimal":"<b>{name}</b>\n\n📦 {size}",
+ "Movie":"🎬 <b>{title}</b> ({year})\n\n🔊 Audio: {audio}\n📺 Quality: {quality}\n💾 Size: {size}\n⏱ Duration: {duration}\n💬 Subs: {subtitle}",
+ "Series":"📺 <b>{title}</b>\nSeason {season} • Episode {episode}\n\n🔊 {audio}\n📺 {quality}\n💾 {size}",
+ "Quote":"<blockquote><b>{name}</b></blockquote>\n📦 {size}  🎞 {quality}\n{caption}"};
+let ST={list:[],id:null,S:null,orig:"",stk:false,files:0,fname:SAMPLE,boot:null}, seq=0, timer=0;
+
+async function api(path,opt={}){
+  const r=await fetch(path,{method:opt.method||"GET",headers:{"Content-Type":"application/json","X-Init-Data":tg?.initData||""},body:opt.body?JSON.stringify(opt.body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||"Something went wrong");
+  return j;
+}
+function toast(msg,kind=""){const t=$("#toast");t.textContent=msg;t.className="on "+kind;clearTimeout(t._t);t._t=setTimeout(()=>t.className="",2400);
+  try{tg?.HapticFeedback?.notificationOccurred(kind==="err"?"error":"success")}catch(e){}}
+const dirty=()=>ST.S&&JSON.stringify(ST.S)!==ST.orig;
+
+function paint(){ // push state → controls
+  const S=ST.S;
+  $("#cap").value=S.caption||""; $("#prefix").value=S.prefix||""; $("#suffix").value=S.suffix||""; $("#buttons").value=S.buttons||"";
+  $("#enabled").checked=S.enabled; $("#autoclean").checked=S.autoclean; $("#react").checked=S.react;
+  $$("[data-tag]").forEach(c=>c.checked=S.hashtags.includes(c.dataset.tag));
+  $("#stk").textContent=ST.stk?"A sticker is set. Change it in the channel with /setsticker or remove it with /clearsticker.":"Not set. In the channel, reply to a sticker with /setsticker.";
+  $("#files").textContent=Number(ST.files).toLocaleString();
+  lists(); flag(); preview();
+}
+function lists(){
+  $("#rmList").innerHTML=ST.S.remove.map((w,i)=>`<li><span>${esc(w)}</span><button data-rm="${i}" aria-label="Remove ${esc(w)}">✕</button></li>`).join("");
+  $("#rpList").innerHTML=ST.S.replace.map((p,i)=>`<li><span>${esc(p[0])}<b class="arrow">→</b>${esc(p[1])||"∅"}</span><button data-rp="${i}" aria-label="Remove rule">✕</button></li>`).join("");
+}
+function flag(){ $("#save").hidden=!dirty(); $("#pvState").textContent=dirty()?"Unsaved":"Saved"; }
+function touch(){ flag(); clearTimeout(timer); timer=setTimeout(preview,260); }
+
+async function preview(){
+  const my=++seq;
+  try{
+    const r=await api("/api/preview",{method:"POST",body:{settings:ST.S,filename:ST.fname}});
+    if(my!==seq) return;
+    $("#pvFile").textContent=r.file; $("#pvCap").innerHTML=r.html||"<i style='color:var(--mute)'>Empty caption</i>";
+    $("#pvKb").innerHTML=r.buttons.map(row=>`<div>${row.map(b=>`<span class="${b.style||""}">${esc(b.text)}</span>`).join("")}</div>`).join("");
+  }catch(e){}
+}
+
+async function load(id){
+  const c=await api("/api/channel/"+id);
+  ST.id=id; ST.S=c.settings; ST.orig=JSON.stringify(c.settings); ST.stk=c.has_sticker; ST.files=c.files;
+  paint();
+}
+async function boot(){
+  try{ ST.boot=await api("/api/bootstrap"); }
+  catch(e){ $("#hello").textContent="";
+    return empty("Open this panel from the bot",`Caption Studio only works inside Telegram. Open the bot and tap <b>Open Web Panel</b>.`); }
+  const b=ST.boot; ST.list=b.channels; $("#hello").textContent="Hi, "+(b.user.name||"there");
+  if(!ST.list.length) return empty("No channels yet",`Add the bot as an admin with permission to post, edit and delete messages. It appears here when you do.`,
+     `<a class="btn" href="https://t.me/${b.bot}?startchannel=true&admin=post_messages+edit_messages+delete_messages" target="_blank">Add bot to a channel</a>`);
+  const sel=$("#chan"); sel.innerHTML=ST.list.map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join("");
+  $("#pickWrap").hidden=false; $("#main").hidden=false; $("#tabs").hidden=false;
+  if(b.is_admin&&b.stats){$("#adminBox").hidden=false;$("#sU").textContent=b.stats.users;$("#sC").textContent=b.stats.channels;$("#sF").textContent=b.stats.files}
+  fillCopy(); $("#fname").value=ST.fname;
+  try{ await load(ST.list[0].id);}catch(e){toast(e.message,"err")}
+}
+function empty(h,t,extra=""){const e=$("#empty");e.hidden=false;e.innerHTML=`<h2>${h}</h2><p>${t}</p>${extra}`}
+function fillCopy(){ $("#copyTo").innerHTML=ST.list.filter(c=>c.id!==ST.id).map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join("")||`<option value="">No other channel</option>`; }
+
+/* events */
+$("#tabs").onclick=e=>{const b=e.target.closest("[data-go]");if(!b)return;document.body.dataset.tab=b.dataset.go;
+  $$("#tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));scrollTo({top:0})};
+$("#chan").onchange=async e=>{ if(dirty()&&!confirm("Discard unsaved changes?")){e.target.value=ST.id;return}
+  try{await load(+e.target.value);fillCopy()}catch(err){toast(err.message,"err")}};
+const bind=(id,key)=>$(id).addEventListener("input",e=>{ST.S[key]=e.target.value;touch()});
+bind("#cap","caption");bind("#prefix","prefix");bind("#suffix","suffix");bind("#buttons","buttons");
+["enabled","autoclean","react"].forEach(k=>$("#"+k).onchange=e=>{ST.S[k]=e.target.checked;touch()});
+$$("[data-tag]").forEach(c=>c.onchange=()=>{const t=c.dataset.tag,a=ST.S.hashtags;ST.S.hashtags=c.checked?[...new Set([...a,t])]:a.filter(x=>x!==t);touch()});
+$("#fname").oninput=e=>{ST.fname=e.target.value||SAMPLE;touch()};
+$("#presets").innerHTML=Object.keys(PRESETS).map(k=>`<button class="chip" data-p="${k}">${k}</button>`).join("");
+$("#vars").innerHTML=VARS.map(v=>`<button class="chip v" data-v="${v}">{${v}}</button>`).join("");
+function insert(el,txt){const s=el.selectionStart??el.value.length,e=el.selectionEnd??s;el.setRangeText(txt,s,e,"end");el.focus();el.dispatchEvent(new Event("input"))}
+$("#presets").onclick=e=>{const b=e.target.closest("[data-p]");if(!b)return;const t=$("#cap");
+  if(t.value.trim()&&!confirm("Replace your current caption?"))return;t.value=PRESETS[b.dataset.p];t.dispatchEvent(new Event("input"))};
+$("#vars").onclick=e=>{const b=e.target.closest("[data-v]");if(b)insert($("#cap"),`{${b.dataset.v}}`)};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-addbtn]");if(b){const t=$("#buttons");insert(t,(t.value&&!t.value.endsWith("\n")?"\n":"")+"[Button text](https://t.me/yourchannel)")}});
+const addRm=()=>{const v=$("#rmIn").value.trim();if(!v)return;if(!ST.S.remove.some(x=>x.toLowerCase()===v.toLowerCase()))ST.S.remove.push(v);$("#rmIn").value="";lists();touch()};
+$("#rmAdd").onclick=addRm;$("#rmIn").onkeydown=e=>e.key==="Enter"&&addRm();
+const addRp=()=>{const o=$("#rpOld").value.trim(),n=$("#rpNew").value.trim();if(!o)return;ST.S.replace=ST.S.replace.filter(p=>p[0].toLowerCase()!==o.toLowerCase());ST.S.replace.push([o,n]);$("#rpOld").value=$("#rpNew").value="";lists();touch()};
+$("#rpAdd").onclick=addRp;$("#rpNew").onkeydown=e=>e.key==="Enter"&&addRp();
+document.addEventListener("click",e=>{const r=e.target.closest("[data-rm]"),p=e.target.closest("[data-rp]");
+  if(r){ST.S.remove.splice(+r.dataset.rm,1);lists();touch()}if(p){ST.S.replace.splice(+p.dataset.rp,1);lists();touch()}});
+$("#discard").onclick=()=>{ST.S=JSON.parse(ST.orig);paint()};
+$("#saveBtn").onclick=async e=>{const b=e.currentTarget;b.disabled=true;
+  try{await api("/api/channel/"+ST.id,{method:"PUT",body:{settings:ST.S}});ST.orig=JSON.stringify(ST.S);flag();toast("Changes saved","ok")}
+  catch(err){toast(err.message,"err")}b.disabled=false};
+$("#copyBtn").onclick=async()=>{const to=+$("#copyTo").value;if(!to)return;
+  if(!confirm("Replace the target channel’s settings with these?"))return;
+  try{await api(`/api/channel/${ST.id}/copy`,{method:"POST",body:{to}});toast("Settings copied","ok")}catch(err){toast(err.message,"err")}};
+$("#resetBtn").onclick=async()=>{if(!confirm("Reset all settings for this channel? This can’t be undone."))return;
+  try{await api(`/api/channel/${ST.id}/reset`,{method:"POST"});await load(ST.id);toast("Channel reset","ok")}catch(err){toast(err.message,"err")}};
+addEventListener("beforeunload",e=>{if(dirty()){e.preventDefault();e.returnValue=""}});
+boot();
+</script>
+</body>
+</html>
