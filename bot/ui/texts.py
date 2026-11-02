@@ -11,7 +11,7 @@ HOME = (
     "👋 <b>Hello {mention},</b>\n\n"
     "I am a smart advanced caption bot built for professional channel management.\n\n"
     "I auto-generate captions, clean file names, add buttons, hashtags and much more — automatically.\n\n"
-    "<blockquote>▸ Maintained By: <b>{maintainer}</b></blockquote>"
+    "<blockquote> 🌿 ᴍᴀɪɴᴛᴀɪɴᴇᴅ ʙʏ  <a href='https://t.me/PrimeXBots'>ᴘʀɪᴍᴇXʙᴏᴛꜱ</a></blockquote>"
 )
 
 HELP = (
@@ -32,13 +32,24 @@ BUTTONS = (
     + "\n<i>Add inline link buttons under every post — download, support, website…</i>\n\n"
     "➤ <code>/btns</code> — Set custom buttons\n➤ <code>/btnsoff</code> — Remove all buttons\n\n"
     "🔹 <b>Examples</b>\n"
-    "▸ Normal:\n<code>/btns [Join](https://t.me/example)</code>\n\n"
-    "▸ With style:\n<code>/btns [Join](https://t.me/example:primary)</code>\n\n"
-    "ℹ️ <b>Button styles</b>\n🔹 <code>:primary</code> — 🔵 Blue\n🔹 <code>:success</code> — 🟢 Green\n"
-    "🔹 <code>:danger</code> — 🔴 Red\n🔶 Omit the suffix for a normal button\n\n"
-    "🔹 <b>Layout</b>\n▸ Same line = same row:\n"
-    "<code>/btns [One](https://example.com) [Two](https://google.com:success)</code>\n\n"
-    "▸ New line = new row:\n<code>/btns [One](https://example.com)\n[Two](https://google.com:success)</code>"
+    "▸ Normal:\n<code>/btns [PrimeXBots](https://t.me/PrimeXBots)</code>\n\n"
+    "▸ With style:\n<code>/btns [PrimeXBots](https://t.me/PrimeXBots:primary)</code>\n\n"
+    "ℹ️ <b>Available Button Styles & Colors:</b>\n"
+    "🔹 <code>:primary</code> — 🔵 Blue\n"
+    "🔹 <code>:success</code> — 🟢 Green\n"
+    "🔹 <code>:danger</code> — 🔴 Red\n"
+    "🔹 <code>:warning</code> — 🟡 Yellow\n"
+    "🔹 <code>:purple</code> — 🟣 Purple\n"
+    "🔹 <code>:orange</code> — 🟠 Orange\n"
+    "🔹 <code>:cyan</code> — 🩵 Cyan\n"
+    "🔹 <code>:black</code> — ⚫ Black\n"
+    "🔹 <code>:white</code> — ⚪ White\n\n"
+    "🔶 <i>Omit the suffix for a normal button without any style.</i>\n\n"
+    "🔹 <b>Layout</b>\n"
+    "▸ Same line = same row:\n"
+    "<code>/btns [PrimeXBots](https://t.me/PrimeXBots:primary) [Updates](https://t.me/PrimeXBots:success)</code>\n\n"
+    "▸ New line = new row:\n"
+    "<code>/btns [PrimeXBots](https://t.me/PrimeXBots:primary)\n[Updates](https://t.me/PrimeXBots:purple)</code>"
 )
 
 CAPTION = (
@@ -62,7 +73,6 @@ SETCAP = (
     "💡 Lines whose variables are all empty are removed automatically.\n"
     "⚠️ Variables are auto-detected from the file name."
 )
-
 DELCAP = (
     _q("🗑 Delete Caption")
     + "\n➤ <code>/delcap</code> — Remove the custom caption and return to the default.\n\n"
