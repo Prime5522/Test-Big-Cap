@@ -14,7 +14,9 @@ from bot.database import db
 from bot.ui.markup import to_markup
 
 log = logging.getLogger("channel")
-REACTIONS = ["👍", "❤", "🔥", "🥰", "👏", "😁", "🎉", "🤩", "⚡", "💯", "🏆", "😍", "🤗", "👌", "😎"]
+
+# টেলিগ্রামের স্ট্যান্ডার্ড ভ্যালিড রিঅ্যাকশন ইমোজি লিস্ট
+REACTIONS = ["👍", "❤️", "🔥", "🥰", "👏", "😁", "🎉", "🤩", "⚡", "💯", "🏆", "😍", "🤗", "👌", "😎"]
 MEDIA = filters.document | filters.video | filters.audio | filters.animation
 
 
@@ -24,6 +26,9 @@ async def retry(fn, *a, **kw):
             return await fn(*a, **kw)
         except FloodWait as e:
             await asyncio.sleep(e.value + 1)
+        except Exception as e:
+            log.warning("Operation failed: %s", e)
+            break
     return None
 
 
@@ -46,7 +51,7 @@ async def process(c: Client, m):
         await retry(m.edit_caption, caption, reply_markup=markup)
     except MessageNotModified:
         pass
-    except BadRequest:                                    # bad user HTML → safe fallback
+    except BadRequest:
         try:
             await retry(m.edit_caption, f"<b>{html.escape(filename)[:900]}</b>", reply_markup=markup)
         except Exception:
@@ -54,16 +59,20 @@ async def process(c: Client, m):
     except Exception as e:
         log.warning("edit failed in %s: %s", chat_id, e)
 
-    if s["react"]:
+    # রিঅ্যাকশন পাঠানো: সরাসরি m.react() মেথড ব্যবহার করা হয়েছে
+    if s.get("react"):
         try:
-            await retry(c.send_reaction, chat_id, m.id, random.choice(REACTIONS))
-        except Exception:
-            pass
-    if s["sticker"]:
+            emoji = random.choice(REACTIONS)
+            await m.react(emoji)
+        except Exception as e:
+            log.warning("Reaction failed in %s: %s (Make sure reactions are enabled in channel settings)", chat_id, e)
+
+    if s.get("sticker"):
         try:
             await retry(c.send_sticker, chat_id, s["sticker"])
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("Sticker send failed in %s: %s", chat_id, e)
+
     db.incr(chat_id)
 
 
@@ -81,3 +90,5 @@ async def on_membership(c: Client, u):
         await db.add_channel(u.chat.id, u.chat.title, u.from_user.id if u.from_user else None)
     elif old and old.user and old.user.is_self and (not new or new.status in (ChatMemberStatus.LEFT, ChatMemberStatus.BANNED)):
         await db.remove_channel(u.chat.id)
+
+        
