@@ -1,15 +1,42 @@
+import logging
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-_EMOJI = {"primary": "🔵 ", "success": "🟢 ", "danger": "🔴 "}
+log = logging.getLogger("markup")
+
+# Kurigram এর ButtonStyle চেক করা
+HAS_BUTTON_STYLE = False
+try:
+    from pyrogram.enums import ButtonStyle
+    STYLE_MAP = {
+        "primary": ButtonStyle.PRIMARY,  # 🔵 Dark Blue
+        "success": ButtonStyle.SUCCESS,  # 🟢 Green
+        "danger": ButtonStyle.DANGER,    # 🔴 Red
+    }
+    HAS_BUTTON_STYLE = True
+except (ImportError, AttributeError):
+    STYLE_MAP = {}
+
+# যদি কোনো কারণে লাইব্রেরিতে কালার সাপোর্ট না করে, তখন ফলব্যাক ইমোজি
+FALLBACK_EMOJI = {
+    "primary": "🔵 ",
+    "success": "🟢 ",
+    "danger": "🔴 ",
+}
 
 
-def _button(text: str, url: str, style: str | None) -> InlineKeyboardButton:
-    if style:
-        try:                                   # native coloured buttons (newer Telegram/Pyrogram builds)
-            return InlineKeyboardButton(text, url=url, style=style)
+def _button(text: str, url: str, style: str | None = None) -> InlineKeyboardButton:
+    text = text.strip()
+    
+    # ১. Kurigram থাকলে রিয়েল কালার বাটন তৈরি করবে
+    if style and HAS_BUTTON_STYLE and style.lower() in STYLE_MAP:
+        try:
+            return InlineKeyboardButton(text, url=url, style=STYLE_MAP[style.lower()])
         except Exception:
-            return InlineKeyboardButton(_EMOJI[style] + text, url=url)   # graceful fallback
-    return InlineKeyboardButton(text, url=url)
+            pass
+
+    # ২. কালার সাপোর্ট না করলে ফলব্যাক (যদি ইমোজি না চান তবে খালি return InlineKeyboardButton(text, url=url) দিতে পারেন)
+    prefix = FALLBACK_EMOJI.get(style.lower(), "") if style else ""
+    return InlineKeyboardButton(prefix + text, url=url)
 
 
 def to_markup(rows) -> InlineKeyboardMarkup | None:
