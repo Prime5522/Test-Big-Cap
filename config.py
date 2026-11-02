@@ -35,7 +35,7 @@ class Config:
     WORKERS = int(os.getenv("WORKERS", "32"))
 
     BOT_NAME = os.getenv("BOT_NAME", "Advance Caption Bot")
-    MAINTAINER = os.getenv("MAINTAINER", "@Prime_Admin_Support_ProBot")
+    MAINTAINER = os.getenv("MAINTAINER", "@PrimeXBots")
     START_PICS = _list(os.getenv("START_PICS", "https://telegra.ph/Prime-Image-11-02-6"))
     SOURCE_URL = os.getenv("SOURCE_URL", "https://t.me/Prime_Admin_Support_ProBot")
     DONATE_URL = os.getenv("DONATE_URL", "")
