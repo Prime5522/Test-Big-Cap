@@ -21,6 +21,13 @@ FALLBACK_EMOJI = {
     "primary": "🔵 ",
     "success": "🟢 ",
     "danger": "🔴 ",
+    "warning": "🟡 ",
+    "yellow": "🟡 ",
+    "purple": "🟣 ",
+    "orange": "🟠 ",
+    "cyan": "🩵 ",
+    "black": "⚫ ",
+    "white": "⚪ ",
 }
 
 
