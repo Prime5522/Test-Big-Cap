@@ -238,7 +238,31 @@ async function boot(){
   fillCopy(); $("#fname").value=ST.fname;
   try{ await load(ST.list[0].id);}catch(e){toast(e.message,"err")}
 }
-function empty(h,t,extra=""){const e=$("#empty");e.hidden=false;e.innerHTML=`<h2>${h}</h2><p>${t}</p>${extra}`}
+function empty(h, t, extra="") {
+  const e = $("#empty");
+  e.hidden = false;
+  e.innerHTML = `
+    <h2>${h}</h2>
+    <p>${t}</p>
+    <div style="margin: 20px auto; max-width: 320px; display: flex; flex-direction: column; gap: 8px;">
+      <input type="text" id="manualChan" placeholder="@channel_username বা ID" style="text-align:center;">
+      <button class="btn" id="manualBtn">➕ Connect Channel</button>
+    </div>
+    ${extra}
+  `;
+
+  $("#manualBtn")?.addEventListener("click", async () => {
+    const val = $("#manualChan").value.trim();
+    if (!val) return toast("চ্যানেল ইউজারনেম বা আইডি দিন", "err");
+    try {
+      const res = await api("/api/channel/connect", { method: "POST", body: { channel: val } });
+      toast("কানেক্ট হয়েছে: " + res.title, "ok");
+      setTimeout(() => location.reload(), 1000);
+    } catch(err) {
+      toast(err.message, "err");
+    }
+  });
+                                          }
 function fillCopy(){ $("#copyTo").innerHTML=ST.list.filter(c=>c.id!==ST.id).map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join("")||`<option value="">No other channel</option>`; }
 
 /* events */
