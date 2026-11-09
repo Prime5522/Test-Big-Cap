@@ -20,6 +20,19 @@ HELP = (
     "📌 <b>Note:</b> <i>All commands work only inside your channel.</i>\n"
     "🌐 Prefer a visual editor? Open the <b>Web Panel</b> from the main menu."
 )
+CONNECT_GUIDE = (
+    _q("🔗 How to Connect Your Channel")
+    + "\nআপনার চ্যানেল বটের সাথে কানেক্ট করতে নিচের যেকোনো একটি পদ্ধতি অনুসরণ করুন:\n\n"
+    "<b>পদ্ধতি ১: মেসেজ ফরোয়ার্ড (সবচেয়ে সহজ)</b>\n"
+    "১. প্রথমে বটকে আপনার চ্যানেলে অ্যাডমিন বানান।\n"
+    "২. চ্যানেলের যেকোনো একটি মেসেজ বা ফাইল এই বটের ইনবক্সে ফরোয়ার্ড (Forward) করুন। সাথে সাথে কানেক্ট হয়ে যাবে!\n\n"
+    "<b>পদ্ধতি ২: কমান্ডের মাধ্যমে</b>\n"
+    "➤ বটের ইনবক্সে লিখুন: <code>/connect @channel_username</code>\n"
+    "➤ অথবা চ্যানেল আইডি দিয়ে: <code>/connect -100xxxxxxxxxx</code>\n\n"
+    "<b>পদ্ধতি ৩: Web Panel থেকে</b>\n"
+    "➤ <b>Open Web Panel</b> বাটনে ক্লিক করে সরাসরি চ্যানেলের ইউজারনেম দিয়ে কানেক্ট করতে পারেন।\n\n"
+    "⚠️ <i>মনে রাখবেন, বটকে অবশ্যই চ্যানেলে Post & Edit Messages পারমিশন দিয়ে অ্যাডমিন করতে হবে।</i>"
+)
 
 REACTIONS = (
     _q("🎭 Reaction Commands")
