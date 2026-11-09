@@ -190,6 +190,39 @@ async def preview(request):
     rows = [[{"text": t, "style": st} for t, _u, st in row] for row in parse_buttons(s["buttons"])]
     return web.json_response({"html": sanitize(text), "buttons": rows, "file": name})
 
+async def connect_channel(request):
+    user = request["user"]
+    uid = user["id"]
+    bot = request.app["bot"]
+    body = await request.json()
+    raw_target = str(body.get("channel", "")).strip()
+
+    if not raw_target:
+        return web.json_response({"error": "চ্যানেল ইউজারনেম বা আইডি দিন!"}, status=400)
+
+    target = int(raw_target) if raw_target.lstrip("-").isdigit() else raw_target
+
+    try:
+        chat = await bot.get_chat(target)
+    except Exception:
+        return web.json_response({"error": "চ্যানেল পাওয়া যায়নি! বট অ্যাডমিন আছে তো?"}, status=404)
+
+    try:
+        bot_mem = await bot.get_chat_member(chat.id, "me")
+        if bot_mem.status != ChatMemberStatus.ADMINISTRATOR:
+            return web.json_response({"error": "বট ওই চ্যানেলে অ্যাডমিন নয়!"}, status=400)
+
+        user_mem = await bot.get_chat_member(chat.id, uid)
+        if user_mem.status not in (ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR):
+            return web.json_response({"error": "আপনি ওই চ্যানেলের অ্যাডমিন নন!"}, status=403)
+    except Exception:
+        return web.json_response({"error": "পারমিশন চেক ব্যর্থ হয়েছে।"}, status=400)
+
+    await db.add_channel(chat.id, chat.title or str(chat.id), owner_id=uid)
+    await db.channels.update_one({"_id": chat.id}, {"$addToSet": {"admins": uid}})
+    
+    return web.json_response({"ok": True, "title": chat.title, "id": chat.id})
+
 
 def create_app(bot) -> web.Application:
     app = web.Application(middlewares=[guard], client_max_size=256 * 1024)
@@ -199,6 +232,7 @@ def create_app(bot) -> web.Application:
         web.get("/api/bootstrap", bootstrap),
         web.get(r"/api/channel/{id:-?\d+}", get_channel),
         web.put(r"/api/channel/{id:-?\d+}", put_channel),
+        web.post("/api/channel/connect", connect_channel),
         web.post(r"/api/channel/{id:-?\d+}/reset", reset_channel),
         web.post(r"/api/channel/{id:-?\d+}/copy", copy_channel),
         web.post("/api/preview", preview),
@@ -211,3 +245,4 @@ async def start_web(bot) -> web.AppRunner:
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", Config.PORT).start()
     return runner
+    
