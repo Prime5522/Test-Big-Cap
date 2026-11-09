@@ -1,13 +1,12 @@
 from pyrogram.types import InlineKeyboardButton as B, InlineKeyboardMarkup as M, WebAppInfo
-
 from bot.database import db
 from config import Config
-
 from . import texts as T
 
-# key → (text, rows of (label, callback), back target)
+# PAGES ডিকশনারিতে "connect" যোগ করুন এবং Help মেনুতে বাটন দিন
 PAGES: dict[str, tuple[str, list[list[tuple[str, str]]], str]] = {
     "help": (T.HELP, [
+        [("🔗 Connect Channel", "connect_guide")],  # <-- হেল্প মেনুর শীর্ষে যুক্ত করা হলো
         [("🎭 Reactions", "reactions"), ("🔘 Buttons", "buttons")],
         [("🎨 Customize Caption 🎨", "caption")],
         [("🪄 AutoClean", "autoclean"), ("🎉 Sticker", "sticker")],
@@ -15,6 +14,7 @@ PAGES: dict[str, tuple[str, list[list[tuple[str, str]]], str]] = {
         [("✨ Prefix", "prefix"), ("✨ Suffix", "suffix")],
         [("⚙️ Manage Bot ⚙️", "manage")],
     ], "home"),
+    "connect_guide": (T.CONNECT_GUIDE, [], "help"), # <-- কানেক্ট গাইড পেজ
     "reactions": (T.REACTIONS, [], "help"),
     "buttons": (T.BUTTONS, [], "help"),
     "caption": (T.CAPTION, [
@@ -41,10 +41,8 @@ PAGES: dict[str, tuple[str, list[list[tuple[str, str]]], str]] = {
     "copy": (T.COPY, [], "manage"),
 }
 
-
 def _rows(rows):
     return [[B(label, callback_data=cb) for label, cb in row] for row in rows]
-
 
 def _nav(back: str, close: bool = False):
     row = [B("↩️ Back", callback_data=back)]
@@ -52,14 +50,18 @@ def _nav(back: str, close: bool = False):
         row.append(B("❌ Close", callback_data="close"))
     return row
 
-
 async def render(key: str, bot_username: str, mention: str = "") -> tuple[str, M]:
     if key == "home":
-        rows = [[B("ℹ️ About", callback_data="about"), B("📚 Help", callback_data="help")],
-                [B("⇆ Add Me To Your Channel ⇆",
-                   url=f"https://t.me/{bot_username}?startchannel=true&admin=post_messages+edit_messages+delete_messages")]]
+        # হোম স্ক্রিনেও সরাসরি "🔗 How to Connect" বাটন দেওয়া হলো
+        rows = [
+            [B("🔗 How to Connect", callback_data="connect_guide"), B("📚 Help", callback_data="help")],
+            [B("➕ Add Me To Channel ➕",
+               url=f"https://t.me/{bot_username}?startchannel=true&admin=post_messages+edit_messages+delete_messages")],
+            [B("ℹ️ About", callback_data="about")]
+        ]
         if Config.WEBAPP_URL.startswith("https://"):
-            rows.append([B("🌐 Open Web Panel", web_app=WebAppInfo(url=Config.WEBAPP_URL))])
+            rows.insert(2, [B("🌐 Open Web Panel", web_app=WebAppInfo(url=Config.WEBAPP_URL))])
+            
         text = T.HOME.replace("{mention}", mention).replace("{maintainer}", Config.MAINTAINER)
         return text, M(rows)
 
@@ -79,8 +81,8 @@ async def render(key: str, bot_username: str, mention: str = "") -> tuple[str, M
         s = await db.stats()
         text = T.STATS.format(**s)
         rows = []
-        if Config.WEBSITE_URL.startswith("http"):
-            rows.append([B("🌐 Website", url=Config.WEBSITE_URL)])
+        if Config.WEBAPP_URL.startswith("https://"):
+            rows.insert(2, [B("🌐 Open Web Panel", web_app=WebAppInfo(url=Config.WEBAPP_URL))])
         rows.append(_nav("about", close=True))
         return text, M(rows)
 
